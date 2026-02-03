@@ -1,9 +1,9 @@
-## Synth/Drum Machine Stage 1
+## Synth/Drum Machine Stage 2
 
 ---
 Key‑Triggered Beep (Python + Pygame)
-This project is the first step toward a Raspberry Pi synth: when you press the space bar, it plays a short beep sound.
-The goal is to understand the basic loop of “listen for a key → play a sound,” before doing any real synthesis.
+This project is the second step toward a Raspberry Pi synth: when you press the space bar, it plays a short beep sound.
+The goal is to replace part one's beep.wav with file with a tone generated via code using Numpy & Pygame logic
 
 ## Features
 
@@ -12,7 +12,7 @@ Simple event loop using Pygame.
 
 Plays a sound when the space bar is pressed.
 
-Small, readable script intended as Stage 1 of a multi‑stage synth/drum machine project.
+Small, readable script intended as Stage 2 of a multi‑stage synth/drum machine project.
  
 ## Requirements
 
@@ -36,16 +36,17 @@ python stage1_play_sound.py
 ---
 Press the space bar to play the beep. Close the window to exit.<br>
 
-The script initializes Pygame, loads `beep.wav` into a `Sound` object, 
-then enters a loop that listens for events. When it receives a `KEYDOWN` event for the space bar, 
-it calls `beep_sound.play()`, sending the audio to the system output.
+The script initializes Pygame, 
+configured basic audio settings: sample rate, beep duration (in milliseconds), 
+volume, and a frequency like 440 Hz<br>
+The main() function initializes Pygame and the mixer with matching settings (44100 Hz, 16‑bit, mono), 
+creates a window, and enters the same event loop used in Stage 1.
 
 
 ## Roadmap
 
 Planned next stages:
 
-- Stage 2 – Generate a simple tone in Python (sine wave) instead of loading `beep.wav`.
 - Stage 3 – Map multiple keys to different notes and add basic note length control.
 - Stage 4 – Add drum machine/Looper:
   - Key-triggered drum pads (kick/snare/hat) using samples.

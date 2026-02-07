@@ -4,9 +4,25 @@ import math
 
 # --- CONFIG ---
 sample_rate = 44100    # samples per second
-duration_ms = 300      # length of beep in milliseconds
+note_ms = 300      # length of beep in milliseconds
 volume = 0.3           # 0.0 to 1.0
-frequency = 440.0      # A4, 440 Hz
+
+
+# Mapping key to frequencies in hz
+key_to_freq = {
+    pygame.K_a: 261.63,         # C4
+    pygame.K_s: 277.18,         # C#4 / Db4
+    pygame.K_d: 293.66,         # D4
+    pygame.K_f: 311.13,         # D#4 / Eb4
+    pygame.K_g: 329.63,         # E4
+    pygame.K_h: 349.23,         # F4
+    pygame.K_j: 369.99,         # F#4 / Gb4
+    pygame.K_k: 392.00,         # G4
+    pygame.K_l: 415.30,         # G#4 / Ab4
+    pygame.K_SEMICOLON: 440.00, # A4
+    pygame.K_QUOTE: 466.16,     # A#4 / Bb4
+    pygame.K_RETURN: 493.88,    # B4
+}
 
 def sine_sound(freq_hz: float, duration_ms: int) -> pygame.mixer.Sound:
     """Create a pygame Sound object for a sine wave"""
@@ -38,9 +54,13 @@ def main():
 
     # window to receive events
     screen = pygame.display.set_mode((400, 200))
-    pygame.display.set_caption("Stage 2 - generate sine beep on space")
+    pygame.display.set_caption("Stage 3 - adding notes")
 
-    beep_sound = sine_sound(frequency,duration_ms)
+    # Generate sounds for each key beforehand
+    note_sounds = {}
+    for key, freq in key_to_freq.items():
+        note_sounds[key] = sine_sound(freq, note_ms)
+
 
     running = True
     while running:
@@ -49,10 +69,10 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-            #Space for beep
+            # "the keyboard"
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    beep_sound.play()
+                if event.key in note_sounds:
+                    note_sounds[event.key].play(maxtime=note_ms)
 
     pygame.quit()
 

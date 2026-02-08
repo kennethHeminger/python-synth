@@ -4,7 +4,6 @@ import math
 
 # --- CONFIG ---
 sample_rate = 44100    # samples per second
-note_ms = 300      # length of beep in milliseconds
 volume = 0.3           # 0.0 to 1.0
 
 
@@ -24,9 +23,9 @@ key_to_freq = {
     pygame.K_RETURN: 493.88,    # B4
 }
 
-def sine_sound(freq_hz: float, duration_ms: int) -> pygame.mixer.Sound:
+def sine_sound(freq_hz: float) -> pygame.mixer.Sound:
     """Create a pygame Sound object for a sine wave"""
-    duration_sec = duration_ms / 1000.0
+    duration_sec = 1.0 # buffer length,
 
     # Time axis: 0 to duration_sec, sample_rate * duration_sec samples
     num_samples = int(sample_rate * duration_sec)
@@ -40,26 +39,23 @@ def sine_sound(freq_hz: float, duration_ms: int) -> pygame.mixer.Sound:
 
     # Convert to 16-bit signed integers
     audio = np.int16(waveform * 32767)
-
     stereo_audio = np.column_stack((audio, audio))
 
     # Turn numpy array into a pygame Sound
-    sound = pygame.sndarray.make_sound(stereo_audio)
-    return sound
+    return pygame.sndarray.make_sound(stereo_audio)
 
 def main():
     #init pygame & audio
     pygame.init()
-    pygame.mixer.init(frequency=sample_rate, size=-16, channels=1)
+    pygame.mixer.init(frequency= sample_rate, size= -16, channels= 2)
 
     # window to receive events
     screen = pygame.display.set_mode((400, 200))
-    pygame.display.set_caption("Stage 3 - adding notes")
+    pygame.display.set_caption("Stage 3.1 - holding notes with keys")
 
-    # Generate sounds for each key beforehand
-    note_sounds = {}
-    for key, freq in key_to_freq.items():
-        note_sounds[key] = sine_sound(freq, note_ms)
+    # Generate sounds and currently playing channels for key
+    note_sounds = {key: sine_sound(freq) for key, freq in key_to_freq.items()}
+    playing_channels = {}
 
 
     running = True
@@ -69,10 +65,16 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-            # "the keyboard"
+            # The keyboard
             if event.type == pygame.KEYDOWN:
-                if event.key in note_sounds:
-                    note_sounds[event.key].play(maxtime=note_ms)
+                if event.key in note_sounds and event.key not in playing_channels:
+                    ch = note_sounds[event.key].play(loops = -1) #loops note while held down
+                    playing_channels[event.key] = ch
+
+            if event.type == pygame.KEYUP:
+                if event.key in playing_channels:
+                    playing_channels[event.key].stop()
+                    del playing_channels[event.key]
 
     pygame.quit()
 

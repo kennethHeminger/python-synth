@@ -1,11 +1,11 @@
 import pygame
 import numpy as np
 import math
+import sounddevice as sd
 
 # --- CONFIG ---
 sample_rate = 44100    # samples per second
-volume = 0.3           # 0.0 to 1.0
-
+volume = 0.2           # 0.0 to 1.0
 
 # Mapping key to frequencies in hz
 key_to_freq = {
@@ -23,39 +23,71 @@ key_to_freq = {
     pygame.K_RETURN: 493.88,    # B4
 }
 
-def sine_sound(freq_hz: float) -> pygame.mixer.Sound:
-    """Create a pygame Sound object for a sine wave"""
-    duration_sec = 1.0 # buffer length,
+pressed_keys = set() # Tracks currently played keys
+phase = 0.0 # Global phase counter so wave form is continuous across callback calls
 
-    # Time axis: 0 to duration_sec, sample_rate * duration_sec samples
-    num_samples = int(sample_rate * duration_sec)
-    t = np.linspace(0, duration_sec, num_samples, endpoint=False)
+def audio_callback(outdata, frames, time, status):
+    """
+    :param outdata: Numpy array for writing audio sample into
+    :param frames: number of samples requested
+    """
+    global phase
 
-    # Sine wave between -1.0 and 1.0
-    waveform = np.sin(2.0 * math.pi * freq_hz * t)
+    # Create a time axis for this block of samples.
+    # np.arrange(frames) -> [0, 1, 2, ..., frames-1]
+    # Add phase so time continues from previous call.
+    # Divide by sample_rate to convert from sample index to seconds.
+    t = (np.arange(frames) + phase) / sample_rate
 
-    # Applying Volume
-    waveform *= volume
+    # Advance phase so next callback starts where this one ended
+    phase += frames
 
-    # Convert to 16-bit signed integers
-    audio = np.int16(waveform * 32767)
-    stereo_audio = np.column_stack((audio, audio))
+    # Stats will silence
+    sig = np.zeros(frames, dtype=np.float32)
 
-    # Turn numpy array into a pygame Sound
-    return pygame.sndarray.make_sound(stereo_audio)
+    active_keys = list(pressed_keys)
+
+    if active_keys:
+        for key in active_keys:
+            freq = key_to_freq.get(key)
+            if freq is None:
+                continue
+
+            # Generate a sine wave for this key over time
+            sig += np.sin(2.0 * math.pi * freq * t).astype(np.float32)
+
+        # Start of polyphony
+        # divide by number of notes so more notes don't just multiply the volume
+        sig /= float(len(pressed_keys))
+
+    # applying volume to prevent output from clipping
+    sig *= volume
+
+    # Shaping audio buffer into a 2d column
+    outdata[:] = sig.reshape(-1, 1)
 
 def main():
     #init pygame & audio
     pygame.init()
-    pygame.mixer.init(frequency= sample_rate, size= -16, channels= 2)
+    pygame.mixer.init(frequency= sample_rate, size= -16, channels= 2, buffer = 512)
+    pygame.mixer.set_num_channels(32) #Up to 32 channels for polyphony
 
     # window to receive events
-    screen = pygame.display.set_mode((400, 200))
-    pygame.display.set_caption("Stage 3.1 - holding notes with keys")
+    screen = pygame.display.set_mode((600, 200))
+    pygame.display.set_caption("Stage 3.2 - Streaming Synth Prototype")
+    clock = pygame.time.Clock()  # clock to cap frame rate
 
-    # Generate sounds and currently playing channels for key
-    note_sounds = {key: sine_sound(freq) for key, freq in key_to_freq.items()}
-    playing_channels = {}
+    # Audio
+    # Create an output stream that will call audio_callback to get audio samples
+    stream = sd.OutputStream(
+        samplerate = sample_rate,
+        channels = 1,
+        dtype = 'float32',
+        callback = audio_callback,
+        blocksize = 512,
+    )
+
+    stream.start()
 
 
     running = True
@@ -67,14 +99,15 @@ def main():
 
             # The keyboard
             if event.type == pygame.KEYDOWN:
-                if event.key in note_sounds and event.key not in playing_channels:
-                    ch = note_sounds[event.key].play(loops = -1) #loops note while held down
-                    playing_channels[event.key] = ch
+                if event.key in key_to_freq:
+                    pressed_keys.add(event.key)
 
+            # Note release
             if event.type == pygame.KEYUP:
-                if event.key in playing_channels:
-                    playing_channels[event.key].stop()
-                    del playing_channels[event.key]
+                if event.key in key_to_freq:
+                    pressed_keys.discard(event.key)
+
+        clock.tick(60) # Limit redraw to 60 FPS
 
     pygame.quit()
 

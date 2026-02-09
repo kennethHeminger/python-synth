@@ -1,55 +1,31 @@
-## Synth/Drum Machine Stage 2
+## Synth/Drum Machine – Stage 3
 
 ---
-Key‑Triggered Beep (Python + Pygame)
-This project is the second step toward a Raspberry Pi synth: when you press the space bar, it plays a short beep sound.
-The goal is to replace part one's beep.wav with file with a tone generated via code using Numpy & Pygame logic
+
+### Streaming Keyboard Synth (Python + Pygame + sounddevice)
+
+This project is the third step toward a Raspberry Pi synth.  
+The goal in this stage is to move from preloaded/looped audio buffers to a **streaming synthesizer** that generates tones in real time using NumPy and a continuous audio callback.
+
+---
 
 ## Features
 
+- Simple real‑time audio stream driven by a callback function.
+- Computer keyboard acts as a piano: notes from `A` through `Return` (C4–B4).
+- Multiple keys can be held at once for basic polyphony.
+- Small, readable script intended as Stage 3 of a multi‑stage synth/drum machine project.
+
 ---
-Simple event loop using Pygame.
 
-Plays a sound when the space bar is pressed.
-
-Small, readable script intended as Stage 2 of a multi‑stage synth/drum machine project.
- 
 ## Requirements
 
----
 - Python 3.x
-- [Pygame]
+- [Pygame](https://www.pygame.org/)
+- [python-sounddevice](https://python-sounddevice.readthedocs.io/)
+- NumPy
 
-## How to Run
-
----
-1. Clone or download this repository.
-2. Ensure `beep.wav` is in the same folder as `stage1_play_sound.py`.
-3. Install dependencies (`pip install pygame`).
-4. Run:
+Install with:
 
 ```bash
-python stage1_play_sound.py
-```
-## How it works
-
----
-Press the space bar to play the beep. Close the window to exit.<br>
-
-The script initializes Pygame, 
-configured basic audio settings: sample rate, beep duration (in milliseconds), 
-volume, and a frequency like 440 Hz<br>
-The main() function initializes Pygame and the mixer with matching settings (44100 Hz, 16‑bit, mono), 
-creates a window, and enters the same event loop used in Stage 1.
-
-
-## Roadmap
-
-Planned next stages:
-
-- Stage 3 – Map multiple keys to different notes and add basic note length control.
-- Stage 4 – Add drum machine/Looper:
-  - Key-triggered drum pads (kick/snare/hat) using samples.
-  - A simple step sequencer to play drum patterns automatically.
-- Stage 5 – Port the project to a Raspberry Pi and tune audio settings for low latency.
-- Stage 6 – Integrate a Teensy-based MIDI controller to trigger notes and drums.
+pip install pygame sounddevice numpy

@@ -50,7 +50,7 @@ def audio_callback(outdata, frames, time, status):
 
         # Start of polyphony
         # divide by number of notes so more notes don't just multiply the volume
-        sig /= float(len(active_keys))
+        sig /= math.sqrt(len(active_keys))
 
     # applying volume to prevent output from clipping
     sig *= volume

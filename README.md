@@ -88,7 +88,9 @@ python stage3_streaming_synth.py
 ##### Stage 4 – Add oscillator controls and envelopes:
 
 - Simple ADSR‑style amplitude shaping.
+
 - Optional drone voices.
+
 - Delays and Reverb
 
 ##### Stage 5 – Add drum machine/Looper:

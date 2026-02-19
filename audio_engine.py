@@ -1,8 +1,11 @@
+from random import sample
+
 import numpy as np
 import math
 import sounddevice as sd
 from keymap import key_to_freq
 from oscillators import oscillators, osc_wave
+from lfo import lfo, lfo_waveform, advance_lfo
 
 # --- CONFIG ---
 sample_rate = 44100    # samples per second
@@ -26,6 +29,10 @@ def audio_callback(outdata, frames, time, status):
     # Advance phase so next callback starts where this one ended
     phase += frames
 
+    #LFO
+    lfo_sig = lfo_waveform(t)
+    advance_lfo(frames, sample_rate)
+
     # Starts will silence
     sig = np.zeros(frames, dtype=np.float32)
 
@@ -42,7 +49,8 @@ def audio_callback(outdata, frames, time, status):
             note_sig = np.zeros(frames, np.float32)
 
             for osc in oscillators:
-                f = base_freq * (1.0 + osc["detune"])
+                pitch_mod = lfo["pitch_int"] * lfo_sig
+                f = base_freq * (1.0 + osc["detune"] + pitch_mod)
                 note_sig += osc["level"] * osc_wave(osc["wave"], f, t)
 
             note_sig /= float(len(oscillators))

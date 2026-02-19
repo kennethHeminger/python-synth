@@ -1,6 +1,6 @@
 import math
 import numpy as np
-
+                        # Static Tone
 oscillators = [
     {"wave": "saw", "detune": 0.0, "level": 0.7},
     {"wave": "square", "detune": 0.02, "level": 0.5}

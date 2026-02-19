@@ -2,6 +2,7 @@ import sys
 import pygame
 from keymap import key_to_freq
 from audio_engine import pressed_keys, start_audio_engine, stop_audio_engine
+from lfo import lfo
 
 def main():
     #init pygame
@@ -55,7 +56,29 @@ def main():
                 if event.key in key_to_freq:
                     pressed_keys.add(event.key)
 
-            # Note release
+            # --LFO--
+
+                # Wave select: 1:saw 2:triangle 3:square
+                if event.key == pygame.K_1:
+                    lfo["wave"] = "saw"
+                elif event.key == pygame.K_2:
+                    lfo["wave"] = "triangle"
+                elif event.key == pygame.K_3:
+                    lfo["wave"] = "square"
+
+                # Rate up/down (speed)
+                elif event.key == pygame.K_UP:
+                    lfo["rate"] = min(20.0, lfo["rate"] + 0.5)
+                elif event.key == pygame.K_DOWN:
+                    lfo["rate"] = max(0.1, lfo["rate"] - 0.5)
+
+                # Pitch depth (intensity)
+                elif event.key == pygame.K_RIGHT:
+                    lfo["pitch_int"] = min(0.1, lfo["pitch_int"] + 0.005)
+                elif event.key == pygame.K_LEFT:
+                    lfo["pitch_int"] = max(0.0, lfo["pitch_int"] - 0.005)
+
+                    # Note release
             if event.type == pygame.KEYUP:
                 if event.key in key_to_freq:
                     pressed_keys.discard(event.key)

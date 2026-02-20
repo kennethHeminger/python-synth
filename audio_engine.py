@@ -5,7 +5,7 @@ import math
 import sounddevice as sd
 from keymap import key_to_freq
 from oscillators import oscillators, osc_wave
-from lfo import lfo, lfo_waveform, advance_lfo
+from lfo import lfo, render_lfos
 
 # --- CONFIG ---
 sample_rate = 44100    # samples per second
@@ -17,7 +17,6 @@ phase = 0.0 # Global phase counter so wave form is continuous across callback ca
 def audio_callback(outdata, frames, time, status):
     # param outdata: Numpy array for writing audio sample into
     # param frames: number of samples requested
-
     global phase
 
     # Create a time axis for this block of samples.
@@ -30,8 +29,7 @@ def audio_callback(outdata, frames, time, status):
     phase += frames
 
     #LFO
-    lfo_sig = lfo_waveform(t)
-    advance_lfo(frames, sample_rate)
+    lfo_signals = render_lfos(t, frames, sample_rate)
 
     # Starts will silence
     sig = np.zeros(frames, dtype=np.float32)
@@ -44,14 +42,30 @@ def audio_callback(outdata, frames, time, status):
             if base_freq is None:
                 continue
 
-
             # Generate a sine wave for this key over time
             note_sig = np.zeros(frames, np.float32)
 
+            # Combining pitch modulation from enabled LFOs... Getting modular
+            total_pitch_mod = np.zeros(frames, dtype=np.float32)
+            for l, sig_lfo in zip(lfo, lfo_signals):
+                if l["enabled"] and l["pitch_depth"]  != 0.0:
+                    total_pitch_mod += l["pitch_depth"] * sig_lfo
+
+
             for osc in oscillators:
-                pitch_mod = lfo["pitch_int"] * lfo_sig
-                f = base_freq * (1.0 + osc["detune"] + pitch_mod)
+                f = base_freq * (1.0 + osc["detune"] + total_pitch_mod)
                 note_sig += osc["level"] * osc_wave(osc["wave"], f, t)
+
+            # 3) Tremelo
+            total_amp_mod = np.zeros(frames, dtype=np.float32)
+            for l, sig in zip(lfo, lfo_signals):
+                if l["enabled"] and l["amp_depth"] != 0.0:
+                    total_amp_mod += l["amp_depth"] * sig
+
+            if np.any(total_amp_mod != 0.0):
+                # map -1..1 -> 1 +/- depth (simple tremolo)
+                amp_scale = 1.0 + total_amp_mod
+                note_sig *= amp_scale
 
             note_sig /= float(len(oscillators))
             sig += note_sig
